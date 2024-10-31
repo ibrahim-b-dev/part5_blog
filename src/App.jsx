@@ -15,6 +15,8 @@ const App = () => {
   const [author, setAuthor] = useState("")
   const [url, setUrl] = useState("")
 
+  const [loginVisible, setLoginVisible] = useState(false)
+
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
@@ -73,26 +75,35 @@ const App = () => {
   const handleCreate = async (event) => {
     event.preventDefault()
 
-    const createdBlog = await blogService.create({
-      author,
-      title,
-      url,
-    })
+    try {
+      const createdBlog = await blogService.create({
+        author,
+        title,
+        url,
+      })
 
-    setBlogs(blogs.concat(createdBlog))
-    setTitle("")
-    setAuthor("")
-    setUrl("")
+      setBlogs(blogs.concat(createdBlog))
+      setTitle("")
+      setAuthor("")
+      setUrl("")
 
-    setNotificationMessage(
-      `a new blog ${createdBlog.title} by ${createdBlog.author} added`
-    )
-    setNotificationStatus(true)
-    setTimeout(() => {
-      setNotificationMessage(null)
-    }, 5000)
+      setNotificationMessage(
+        `a new blog ${createdBlog.title} by ${createdBlog.author} added`
+      )
+      setNotificationStatus(true)
+      setTimeout(() => {
+        setNotificationMessage(null)
+      }, 5000)
+    } catch (error) {
+      setNotificationMessage(error.response.data.error)
+      setNotificationStatus(false)
+      setTimeout(() => {
+        setNotificationMessage(null)
+      }, 5000)
+    }
   }
 
+  // render functions
   const loginForm = () => (
     <div>
       <h3>log in to application</h3>
@@ -118,74 +129,82 @@ const App = () => {
     </div>
   )
 
-  const createForm = () => (
-    <div>
-      <h2>create new</h2>
-      <form onSubmit={handleCreate}>
-        <div>
-          title
-          <input
-            type="text"
-            value={title}
-            name="title"
-            onChange={({ target }) => setTitle(target.value)}
-          />
-        </div>
-        <div>
-          author
-          <input
-            type="text"
-            value={author}
-            name="author"
-            onChange={({ target }) => setAuthor(target.value)}
-          />
-        </div>
-        <div>
-          url
-          <input
-            type="text"
-            value={url}
-            name="url"
-            onChange={({ target }) => setUrl(target.value)}
-          />
-        </div>
-        <button type="submit">create</button>
-      </form>
-    </div>
-  )
+  const createForm = () => {
+    const hideWhenVisible = { display: loginVisible ? "none" : "" }
+    const showWhenVisible = { display: loginVisible ? "" : "none" }
 
-  if (user === null) {
     return (
       <div>
-        <Notification
-          message={notificationMessage}
-          status={notificationStatus}
-        />
-        {loginForm()}
+        <div style={hideWhenVisible}>
+          <button onClick={() => setLoginVisible(true)}>create note</button>
+        </div>
+
+        <div style={showWhenVisible}>
+          <h2>create new</h2>
+          <form onSubmit={handleCreate}>
+            <div>
+              title
+              <input
+                type="text"
+                value={title}
+                name="title"
+                onChange={({ target }) => setTitle(target.value)}
+              />
+            </div>
+            <div>
+              author
+              <input
+                type="text"
+                value={author}
+                name="author"
+                onChange={({ target }) => setAuthor(target.value)}
+              />
+            </div>
+            <div>
+              url
+              <input
+                type="text"
+                value={url}
+                name="url"
+                onChange={({ target }) => setUrl(target.value)}
+              />
+            </div>
+            <button type="submit">create</button>
+          </form>
+          <button onClick={() => setLoginVisible(false)}>cancel</button>
+        </div>
       </div>
     )
   }
 
+  const userState = () => (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <p>{user.name} logged in</p>
+      <button onClick={handleLogout}>logout</button>
+    </div>
+  )
+
+  const showBlogs = () => (
+    <div>
+      {blogs.map((blog) => (
+        <Blog key={blog.id} blog={blog} />
+      ))}
+    </div>
+  )
+
   return (
     <div>
-      <div>
-        <h2>blogs</h2>
-        <Notification
-          message={notificationMessage}
-          status={notificationStatus}
-        />
+      <h2>blogs</h2>
+      <Notification message={notificationMessage} status={notificationStatus} />
 
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <p>{user.name} logged in</p>
-          <button onClick={handleLogout}>logout</button>
+      {!user && loginForm()}
+      {user && (
+        <div>
+          {userState()}
+          {createForm()}
+          {showBlogs()}
         </div>
-
-        {createForm()}
-
-        {blogs.map((blog) => (
-          <Blog key={blog.id} blog={blog} />
-        ))}
-      </div>
+      )}
     </div>
   )
 }
