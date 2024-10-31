@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 import Notification from "./components/Notification"
 import Blog from "./components/Blog"
+import Togglable from "./components/Togglable"
+import BlogForm from "./components/BlogForm"
 import blogService from "./services/blogs"
 import loginService from "./services/login"
-import Togglable from "./components/Togglable"
-import CreateBlogForm from "./components/CreateForm"
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
@@ -18,12 +18,12 @@ const App = () => {
     const fetchBlogs = async () => {
       try {
         const blogs = await blogService.getAll()
-        setBlogs(blogs)
+        const sortedBlogs = blogs.sort((a, b) => b.likes - a.likes)
+        setBlogs(sortedBlogs)
       } catch (error) {
         console.error("Failed to fetch blogs:", error)
       }
     }
-
     fetchBlogs()
   }, [])
 
@@ -94,9 +94,9 @@ const App = () => {
     try {
       const updatedBlog = await blogService.update(blogObject)
       setBlogs((prevBlogs) =>
-        prevBlogs.map((blog) =>
-          blog.id === updatedBlog.id ? updatedBlog : blog
-        )
+        prevBlogs
+          .map((blog) => (blog.id === updatedBlog.id ? updatedBlog : blog))
+          .sort((a, b) => b.likes - a.likes)
       )
     } catch (error) {
       console.log(error.response.data.error)
@@ -132,7 +132,7 @@ const App = () => {
   const createForm = () => {
     return (
       <Togglable buttonLabel="new blog">
-        <CreateBlogForm createBlog={handleAddBlog} />
+        <BlogForm createBlog={handleAddBlog} />
       </Togglable>
     )
   }
