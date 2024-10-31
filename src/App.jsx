@@ -103,6 +103,21 @@ const App = () => {
     }
   }
 
+  const removeBlog = async (id) => {
+    try {
+      await blogService.remove(id)
+      setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog.id !== id))
+
+      setNotificationMessage("blog deleted")
+      setNotificationStatus(true)
+      setTimeout(() => {
+        setNotificationMessage(null)
+      }, 5000)
+    } catch (error) {
+      console.log(error.response.data.error)
+    }
+  }
+
   // render functions
   const loginForm = () => (
     <div>
@@ -147,7 +162,12 @@ const App = () => {
   const showBlogs = () => (
     <div>
       {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} onLike={incrementBlogLikes} />
+        <Blog
+          key={blog.id}
+          blog={blog}
+          onLike={incrementBlogLikes}
+          onRemove={removeBlog}
+        />
       ))}
     </div>
   )
