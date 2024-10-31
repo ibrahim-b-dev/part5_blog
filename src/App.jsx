@@ -69,7 +69,7 @@ const App = () => {
     }, 5000)
   }
 
-  const addBlog = async (blogObject) => {
+  const handleAddBlog = async (blogObject) => {
     try {
       const createdBlog = await blogService.create(blogObject)
 
@@ -87,6 +87,19 @@ const App = () => {
       setTimeout(() => {
         setNotificationMessage(null)
       }, 5000)
+    }
+  }
+
+  const incrementBlogLikes = async (blogObject) => {
+    try {
+      const updatedBlog = await blogService.update(blogObject)
+      setBlogs((prevBlogs) =>
+        prevBlogs.map((blog) =>
+          blog.id === updatedBlog.id ? updatedBlog : blog
+        )
+      )
+    } catch (error) {
+      console.log(error.response.data.error)
     }
   }
 
@@ -119,7 +132,7 @@ const App = () => {
   const createForm = () => {
     return (
       <Togglable buttonLabel="new blog">
-        <CreateBlogForm createBlog={addBlog} />
+        <CreateBlogForm createBlog={handleAddBlog} />
       </Togglable>
     )
   }
@@ -134,7 +147,7 @@ const App = () => {
   const showBlogs = () => (
     <div>
       {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} />
+        <Blog key={blog.id} blog={blog} onLike={incrementBlogLikes} />
       ))}
     </div>
   )
