@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import Blog from "./Blog"
-import { expect } from "vitest"
 
 describe("<Blog />", () => {
   test("renders blog title, but does not display URL or likes by default", () => {
@@ -49,6 +49,40 @@ describe("<Blog />", () => {
     // Find the likes element by the blog's likes count
     const likes = screen.getByText(blog.likes)
     // Confirm that the likes count is also within the hidden content section
+    expect(hiddenContent).toContainElement(likes)
+  })
+
+  test("displays URL and likes when the details button is clicked", async () => {
+    const blog = {
+      title: "Canonical string reduction",
+      author: "Edsger W. Dijkstra",
+      url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
+      likes: 12,
+    }
+
+    const mockHandler = vi.fn()
+
+    const { container } = render(
+      <Blog blog={blog} onLike={() => {}} onRemove={() => {}} />
+    )
+
+    const visibleContent = container.querySelector(".visibleContent")
+    expect(visibleContent).toBeVisible()
+
+    const hiddenContent = container.querySelector(".hiddenContent")
+    expect(hiddenContent).not.toBeVisible()
+
+    const user = userEvent.setup()
+    const viewButton = screen.getByText("view")
+
+    expect(visibleContent).toContainElement(viewButton)
+    await user.click(viewButton)
+    expect(hiddenContent).toBeVisible()
+
+    const url = screen.getByText(blog.url)
+    expect(hiddenContent).toContainElement(url)
+
+    const likes = screen.getByText(blog.likes)
     expect(hiddenContent).toContainElement(likes)
   })
 })
