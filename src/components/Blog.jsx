@@ -31,13 +31,13 @@ const Blog = ({ blog, onLike, onRemove }) => {
   }
 
   return (
-    <div style={blogStyle}>
-      <div>
+    <div data-testid="parent-div" className="blog" style={blogStyle}>
+      <div className="visibleContent">
         {blog.title}
         <button onClick={handleVisibility}>view</button>
       </div>
 
-      <div style={{ display: visible ? "" : "none" }}>
+      <div className="hiddenContent" style={{ display: visible ? "" : "none" }}>
         <div>{blog.url}</div>
         <div>
           {blog.likes}
