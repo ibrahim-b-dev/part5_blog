@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import Blog from "./Blog"
+import BlogForm from "./BlogForm"
 
 describe("<Blog />", () => {
   test("renders blog title, but does not display URL or likes by default", () => {
@@ -60,8 +61,7 @@ describe("<Blog />", () => {
       likes: 12,
     }
 
-    const mockHandler = vi.fn()
-
+    const mockVieweHandler = vi.fn()
     const { container } = render(
       <Blog blog={blog} onLike={() => {}} onRemove={() => {}} />
     )
@@ -84,5 +84,30 @@ describe("<Blog />", () => {
 
     const likes = screen.getByText(blog.likes)
     expect(hiddenContent).toContainElement(likes)
+  })
+
+  test("calls event handler twice if like button is clicked twice", async () => {
+    const blog = {
+      title: "Test Blog",
+      author: "Jane Doe",
+      url: "http://example.com",
+      likes: 0,
+      user: {
+        id: 1,
+      },
+    }
+    const mockLikeHandler = vi.fn()
+
+    const { container } = render(
+      <Blog blog={blog} onLike={mockLikeHandler} onRemove={() => {}} />
+    )
+
+    const user = userEvent.setup()
+    const likeButton = screen.getByText("like")
+
+    await user.click(likeButton)
+    await user.click(likeButton)
+
+    expect(mockLikeHandler).toHaveBeenCalledTimes(2)
   })
 })
