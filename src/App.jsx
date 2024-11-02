@@ -109,7 +109,7 @@ const App = () => {
       setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog.id !== id))
 
       setNotificationMessage("blog deleted")
-      setNotificationStatus(true)
+      setNotificationStatus(false)
       setTimeout(() => {
         setNotificationMessage(null)
       }, 5000)

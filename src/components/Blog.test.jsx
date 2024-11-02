@@ -110,4 +110,29 @@ describe("<Blog />", () => {
 
     expect(mockLikeHandler).toHaveBeenCalledTimes(2)
   })
+
+  test("calls event handler with correct details when a new blog is created", async () => {
+    const mockCreateHandler = vi.fn()
+    const { container } = render(<BlogForm createBlog={mockCreateHandler} />)
+
+    const user = userEvent.setup()
+
+    const titleInput = container.querySelector('input[name="title"]')
+    const authorInput = container.querySelector('input[name="author"]')
+    const urlInput = container.querySelector('input[name="url"]')
+    const submitButton = screen.getByText("create")
+
+    await user.type(titleInput, "New Blog Title")
+    await user.type(authorInput, "Author Name")
+    await user.type(urlInput, "http://example.com")
+
+    await user.click(submitButton)
+
+    expect(mockCreateHandler).toHaveBeenCalledTimes(1)
+    expect(mockCreateHandler).toHaveBeenCalledWith({
+      title: "New Blog Title",
+      author: "Author Name",
+      url: "http://example.com",
+    })
+  })
 })
