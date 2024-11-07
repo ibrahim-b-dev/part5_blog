@@ -46,4 +46,36 @@ describe("Blog app", () => {
       await expect(errorDiv).toContainText("Wrong username or password")
     })
   })
+
+  describe("When logged in", () => {
+    beforeEach(async ({ page }) => {
+      await page.getByTestId("username").fill("ibrahim")
+      await page.getByTestId("password").fill("123")
+      await page.getByRole("button", { name: "login" }).click()
+    })
+
+    test("a new blog can be created", async ({ page }) => {
+      await expect(page.getByRole("button", { name: "new blog" })).toBeVisible()
+      await page.getByRole("button", { name: "new blog" }).click()
+
+      await expect(page.getByRole("button", { name: "create" })).toBeVisible()
+
+      await page.getByTestId("title").fill("playwright is awesome")
+      await page.getByTestId("author").fill("ibrahim")
+      await page.getByTestId("url").fill("www.localhost.com/url")
+
+      await page.getByRole("button", { name: "create" }).click()
+
+      const successDiv = await page.locator(".success")
+      await expect(successDiv).toContainText(
+        "a new blog playwright is awesome by ibrahim added"
+      )
+
+      await page.waitForTimeout(5000)
+
+      await page.pause()
+      await expect(page.getByRole("button", { name: "view" })).toBeVisible()
+      await expect(page.getByText("playwright is awesome")).toBeVisible()
+    })
+  })
 })

@@ -33,7 +33,7 @@ const Blog = ({ blog, onLike, onRemove }) => {
   return (
     <div data-testid="parent-div" className="blog" style={blogStyle}>
       <div className="visibleContent">
-        {blog.title}
+        <span>{blog.title}</span>
         <button onClick={handleVisibility}>view</button>
       </div>
 
