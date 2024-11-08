@@ -1,9 +1,10 @@
 const { describe, beforeEach, test, expect } = require("@playwright/test")
+const { loginWith, createBlog } = require("./helper")
 
 describe("Blog app", () => {
   beforeEach(async ({ page, request }) => {
-    await request.post("http://localhost:3001/api/testing/reset")
-    await request.post("http://localhost:3001/api/users", {
+    await request.post("/api/testing/reset")
+    await request.post("/api/users", {
       data: {
         name: "Ibrahim Dev",
         username: "ibrahim",
@@ -11,7 +12,7 @@ describe("Blog app", () => {
       },
     })
 
-    await page.goto("http://localhost:5173/")
+    await page.goto("/")
   })
 
   test("login form is shown", async ({ page }) => {
@@ -49,9 +50,7 @@ describe("Blog app", () => {
 
   describe("When logged in", () => {
     beforeEach(async ({ page }) => {
-      await page.getByTestId("username").fill("ibrahim")
-      await page.getByTestId("password").fill("123")
-      await page.getByRole("button", { name: "login" }).click()
+      await loginWith(page, "ibrahim", "123")
     })
 
     test("a new blog can be created", async ({ page }) => {
@@ -60,22 +59,39 @@ describe("Blog app", () => {
 
       await expect(page.getByRole("button", { name: "create" })).toBeVisible()
 
-      await page.getByTestId("title").fill("playwright is awesome")
-      await page.getByTestId("author").fill("ibrahim")
-      await page.getByTestId("url").fill("www.localhost.com/url")
-
-      await page.getByRole("button", { name: "create" }).click()
+      await createBlog(page, {
+        title: "playwright is awesome",
+        author: "ibrahim",
+        url: "www.localhost.com/url",
+      })
 
       const successDiv = await page.locator(".success")
       await expect(successDiv).toContainText(
         "a new blog playwright is awesome by ibrahim added"
       )
 
-      await page.waitForTimeout(5000)
-
-      await page.pause()
       await expect(page.getByRole("button", { name: "view" })).toBeVisible()
-      await expect(page.getByText("playwright is awesome")).toBeVisible()
+    })
+
+    test("a blog can be liked", async ({ page }) => {
+      await page.getByRole("button", { name: "new blog" }).click()
+
+      await createBlog(page, {
+        title: "playwright is awesome",
+        author: "ibrahim",
+        url: "www.localhost.com/url",
+      })
+
+      const viewButton = await page.getByRole("button", { name: "view" })
+      await expect(viewButton).toBeVisible()
+      await viewButton.click()
+
+      await expect(page.getByText("create new")).toBeVisible()
+      const likesElement = await page.getByTestId("likes")
+      const initialLikes = parseInt(await likesElement.textContent(), 0)
+
+      await page.getByRole("button", { name: "like" }).click()
+      await expect(likesElement).toHaveText((initialLikes + 1).toString())
     })
   })
 })

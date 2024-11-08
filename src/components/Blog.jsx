@@ -40,7 +40,7 @@ const Blog = ({ blog, onLike, onRemove }) => {
       <div className="hiddenContent" style={{ display: visible ? "" : "none" }}>
         <div>{blog.url}</div>
         <div>
-          {blog.likes}
+          <span data-testid="likes">{blog.likes}</span>
           <button onClick={handleLikeClick}>like</button>
         </div>
         <div>{blog.author}</div>
