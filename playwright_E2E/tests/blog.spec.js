@@ -1,15 +1,14 @@
 const { describe, beforeEach, test, expect } = require("@playwright/test")
-const { loginWith, createBlog } = require("./helper")
+const { loginWith, createBlog, createUser } = require("./helper")
 
 describe("Blog app", () => {
   beforeEach(async ({ page, request }) => {
     await request.post("/api/testing/reset")
-    await request.post("/api/users", {
-      data: {
-        name: "Ibrahim Dev",
-        username: "ibrahim",
-        password: "123",
-      },
+
+    await createUser(request, {
+      name: "Ibrahim Dev",
+      username: "ibrahim",
+      password: "123",
     })
 
     await page.goto("/")
@@ -92,6 +91,30 @@ describe("Blog app", () => {
 
       await page.getByRole("button", { name: "like" }).click()
       await expect(likesElement).toHaveText((initialLikes + 1).toString())
+    })
+
+    test("user who added the blog can delete the blog", async ({ page }) => {
+      await expect(page.getByRole("button", { name: "new blog" })).toBeVisible()
+      await page.getByRole("button", { name: "new blog" }).click()
+      await createBlog(page, {
+        title: "learn react native",
+        author: "ibrahim",
+        url: "www.localhost.com/react-native",
+      })
+
+      await expect(
+        page.getByText("www.localhost.com/react-native")
+      ).not.toBeVisible()
+
+      await page.getByRole("button", { name: "view" }).click()
+
+      const deleteButton = page.getByRole("button", { name: "remove" })
+      await expect(deleteButton).toBeVisible()
+
+      await deleteButton.click()
+
+      const errorDiv = await page.locator(".error")
+      await expect(errorDiv).toContainText("blog deleted")
     })
   })
 })

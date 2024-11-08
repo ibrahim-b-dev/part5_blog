@@ -13,4 +13,9 @@ const createBlog = async (page, content) => {
   await page.getByRole("button", { name: "create" }).click()
 }
 
-export { loginWith, createBlog }
+const createUser = async (request, { name, username, password }) => {
+  const userPayload = { name, username, password }
+  await request.post("/api/users", { data: userPayload })
+}
+
+export { loginWith, createBlog, createUser }
