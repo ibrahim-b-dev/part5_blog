@@ -72,8 +72,9 @@ const App = () => {
   const handleAddBlog = async (blogObject) => {
     try {
       const createdBlog = await blogService.create(blogObject)
-
-      setBlogs(blogs.concat(createdBlog))
+      const updatedBlogs = await blogService.getAll()
+      setBlogs(updatedBlogs.sort((a, b) => b.likes - a.likes))
+      // setBlogs(blogs.concat(createdBlog))
       setNotificationMessage(
         `a new blog ${createdBlog.title} by ${createdBlog.author} added`
       )
@@ -169,6 +170,7 @@ const App = () => {
           blog={blog}
           onLike={incrementBlogLikes}
           onRemove={removeBlog}
+          currentUserId={user ? user.id : null}
         />
       ))}
     </div>

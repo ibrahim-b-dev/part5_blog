@@ -96,6 +96,7 @@ describe("Blog app", () => {
     test("user who added the blog can delete the blog", async ({ page }) => {
       await expect(page.getByRole("button", { name: "new blog" })).toBeVisible()
       await page.getByRole("button", { name: "new blog" }).click()
+
       await createBlog(page, {
         title: "learn react native",
         author: "ibrahim",
@@ -115,6 +116,108 @@ describe("Blog app", () => {
 
       const errorDiv = await page.locator(".error")
       await expect(errorDiv).toContainText("blog deleted")
+    })
+
+    test(" only the user who added the blog sees the blog's delete button", async ({
+      page,
+      request,
+    }) => {
+      await request.post("/api/testing/reset")
+
+      await request.post("/api/users", {
+        data: {
+          name: "Creator User",
+          username: "creator",
+          password: "creatorpass",
+        },
+      })
+
+      // await request.post("/api/users", {
+      //   data: {
+      //     name: "Other User",
+      //     username: "otheruser",
+      //     password: "otherpass",
+      //   },
+      // })
+
+      // await page.getByTestId("username").fill("creator")
+      // await page.getByTestId("password").fill("creatorpass")
+      // await page.getByRole("button", { name: "login" }).click()
+
+      // Log in as the creator and add a blog
+      // await page.goto("/")
+
+      // // Create a new blog
+      // await expect(page.getByRole("button", { name: "new blog" })).toBeVisible()
+      // await page.getByRole("button", { name: "new blog" }).click()
+      // // await page.getByRole("button", { name: "new blog" }).click()
+      // await page.getByTestId("title").fill("Test Blog")
+      // await page.getByTestId("author").fill("Test Author")
+      // await page.getByTestId("url").fill("http://testurl.com")
+      // await page.getByRole("button", { name: "create" }).click()
+
+      // Ensure the creator can see the delete button
+      // await expect(page.getByText("Test Blog")).toBeVisible()
+      // await page.getByRole("button", { name: "view" }).click()
+      // await expect(page.getByRole("button", { name: "remove" })).toBeVisible()
+
+      // Log out
+      // await page.getByRole("button", { name: "logout" }).click()
+
+      // Log in as a different user
+      // await page.getByTestId("username").fill("otheruser")
+      // await page.getByTestId("password").fill("otherpass")
+      // await page.getByRole("button", { name: "login" }).click()
+
+      // Check that the delete button is not visible
+      // await expect(page.getByText("Test Blog")).toBeVisible()
+      // await page.getByRole("button", { name: "view" }).click()
+      // await expect(
+      //   page.getByRole("button", { name: "remove" })
+      // ).not.toBeVisible()
+    })
+
+    test.only("shows delete button to blog creator only", async ({
+      page,
+      request,
+    }) => {
+      await page.goto("/")
+
+      // create test user
+      await createUser(request, {
+        name: "Other User",
+        username: "otheruser",
+        password: "otherpass",
+      })
+
+      // Log in as the creator and add a blog
+      await loginWith(page, "otheruser", "otherpass")
+
+      await page.getByRole("button", { name: "new blog" }).click()
+
+      // Create a new blog
+      await createBlog(page, {
+        title: "Test Blog",
+        author: "Test Author",
+        url: "http://testurl.com",
+      })
+
+      // Ensure the creator can see the delete button
+      await page.getByRole("button", { name: "view" }).click()
+      await expect(page.getByRole("button", { name: "remove" })).toBeVisible()
+
+      // Log out
+      await page.getByRole("button", { name: "logout" }).click()
+
+      // Log in as a different user
+      await loginWith(page, "ibrahim", "123")
+
+      // Check that the delete button is not visible
+      await page.getByRole("button", { name: "view" }).click()
+      await expect(page.getByText("Test Blog")).toBeVisible()
+      await expect(
+        page.getByRole("button", { name: "remove" })
+      ).not.toBeVisible()
     })
   })
 })
