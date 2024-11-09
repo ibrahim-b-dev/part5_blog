@@ -1,5 +1,5 @@
 const { describe, beforeEach, test, expect } = require("@playwright/test")
-const { loginWith, createBlog, createUser } = require("./helper")
+const { loginWith, createBlog, createUser, likeABlog } = require("./helper")
 
 describe("Blog app", () => {
   beforeEach(async ({ page, request }) => {
@@ -29,18 +29,14 @@ describe("Blog app", () => {
 
   describe("Login", () => {
     test("succeeds with correct credentials", async ({ page }) => {
-      await page.getByTestId("username").fill("ibrahim")
-      await page.getByTestId("password").fill("123")
-      await page.getByRole("button", { name: "login" }).click()
+      await loginWith(page, "ibrahim", "123")
 
       await expect(page.getByText("Ibrahim Dev logged in")).toBeVisible()
       await expect(page.getByRole("button", { name: "new blog" })).toBeVisible()
     })
 
     test("fails with wrong credentials", async ({ page }) => {
-      await page.getByTestId("username").fill("ibrahim")
-      await page.getByTestId("password").fill("wrong")
-      await page.getByRole("button", { name: "login" }).click()
+      await loginWith(page, "ibrahim", "wrong")
 
       const errorDiv = await page.locator(".error")
       await expect(errorDiv).toContainText("Wrong username or password")
@@ -118,106 +114,149 @@ describe("Blog app", () => {
       await expect(errorDiv).toContainText("blog deleted")
     })
 
-    test(" only the user who added the blog sees the blog's delete button", async ({
+    test("only the user who added the blog sees the blog's delete button", async ({
       page,
       request,
     }) => {
+      test.setTimeout(30000)
       await request.post("/api/testing/reset")
 
-      await request.post("/api/users", {
-        data: {
-          name: "Creator User",
-          username: "creator",
-          password: "creatorpass",
-        },
+      await createUser(request, {
+        name: "Creator User",
+        username: "creator",
+        password: "creatorpass",
       })
 
-      // await request.post("/api/users", {
-      //   data: {
-      //     name: "Other User",
-      //     username: "otheruser",
-      //     password: "otherpass",
-      //   },
-      // })
+      await page.getByRole("button", { name: "logout" }).click()
 
-      // await page.getByTestId("username").fill("creator")
-      // await page.getByTestId("password").fill("creatorpass")
-      // await page.getByRole("button", { name: "login" }).click()
+      await loginWith(page, "creator", "creatorpass")
 
-      // Log in as the creator and add a blog
-      // await page.goto("/")
+      await page.getByRole("button", { name: "new blog" }).click()
 
-      // // Create a new blog
-      // await expect(page.getByRole("button", { name: "new blog" })).toBeVisible()
-      // await page.getByRole("button", { name: "new blog" }).click()
-      // // await page.getByRole("button", { name: "new blog" }).click()
-      // await page.getByTestId("title").fill("Test Blog")
-      // await page.getByTestId("author").fill("Test Author")
-      // await page.getByTestId("url").fill("http://testurl.com")
-      // await page.getByRole("button", { name: "create" }).click()
+      await createBlog(page, {
+        title: "Restricted Blog",
+        author: "Creator Author",
+        url: "http://creator-blog.com",
+      })
 
-      // Ensure the creator can see the delete button
-      // await expect(page.getByText("Test Blog")).toBeVisible()
-      // await page.getByRole("button", { name: "view" }).click()
-      // await expect(page.getByRole("button", { name: "remove" })).toBeVisible()
+      await page.getByRole("button", { name: "view" }).click()
+      await expect(page.getByRole("button", { name: "remove" })).toBeVisible()
 
-      // Log out
-      // await page.getByRole("button", { name: "logout" }).click()
+      await page.getByRole("button", { name: "logout" }).click()
 
-      // Log in as a different user
-      // await page.getByTestId("username").fill("otheruser")
-      // await page.getByTestId("password").fill("otherpass")
-      // await page.getByRole("button", { name: "login" }).click()
-
-      // Check that the delete button is not visible
-      // await expect(page.getByText("Test Blog")).toBeVisible()
-      // await page.getByRole("button", { name: "view" }).click()
-      // await expect(
-      //   page.getByRole("button", { name: "remove" })
-      // ).not.toBeVisible()
-    })
-
-    test.only("shows delete button to blog creator only", async ({
-      page,
-      request,
-    }) => {
-      await page.goto("/")
-
-      // create test user
       await createUser(request, {
         name: "Other User",
         username: "otheruser",
         password: "otherpass",
       })
 
-      // Log in as the creator and add a blog
+      await loginWith(page, "otheruser", "otherpass")
+
+      await page.getByRole("button", { name: "view" }).click()
+      await expect(
+        page.getByRole("button", { name: "remove" })
+      ).not.toBeVisible()
+    })
+
+    test("shows delete button to blog creator only", async ({
+      page,
+      request,
+    }) => {
+      await page.goto("/")
+
+      await createUser(request, {
+        name: "Other User",
+        username: "otheruser",
+        password: "otherpass",
+      })
+
       await loginWith(page, "otheruser", "otherpass")
 
       await page.getByRole("button", { name: "new blog" }).click()
 
-      // Create a new blog
       await createBlog(page, {
         title: "Test Blog",
         author: "Test Author",
         url: "http://testurl.com",
       })
 
-      // Ensure the creator can see the delete button
       await page.getByRole("button", { name: "view" }).click()
       await expect(page.getByRole("button", { name: "remove" })).toBeVisible()
 
-      // Log out
       await page.getByRole("button", { name: "logout" }).click()
 
-      // Log in as a different user
       await loginWith(page, "ibrahim", "123")
 
-      // Check that the delete button is not visible
       await page.getByRole("button", { name: "view" }).click()
       await expect(page.getByText("Test Blog")).toBeVisible()
       await expect(
         page.getByRole("button", { name: "remove" })
       ).not.toBeVisible()
+    })
+
+    test("blogs are ordered by likes in descending order", async ({
+      page,
+      request,
+    }) => {
+      test.setTimeout(30000)
+      await page.goto("/")
+
+      await createUser(request, {
+        name: "Other User",
+        username: "otheruser",
+        password: "otherpass",
+      })
+
+      await loginWith(page, "otheruser", "otherpass")
+      await page.getByRole("button", { name: "new blog" }).click()
+
+      const testBlogs = [
+        {
+          title: "Blog A",
+          author: "Author A",
+          url: "urlA",
+          likes: 5,
+        },
+        {
+          title: "Blog B",
+          author: "Author B",
+          url: "urlB",
+          likes: 7,
+        },
+        {
+          title: "Blog C",
+          author: "Author C",
+          url: "urlC",
+          likes: 3,
+        },
+      ]
+
+      for (const blog of testBlogs) {
+        await createBlog(page, {
+          title: blog.title,
+          author: blog.author,
+          url: blog.url,
+        })
+
+        await likeABlog(page, blog.title, blog.likes)
+      }
+
+      const blogLikes = await page
+        .locator(".blog")
+        .evaluateAll((blogs) =>
+          blogs.map((blog) =>
+            parseInt(
+              blog.querySelector("[data-testid='likes']").textContent,
+              10
+            )
+          )
+        )
+
+      for (let i = 0; i < blogLikes.length - 1; i++) {
+        console.log(blogLikes[i])
+
+        expect(blogLikes[i]).toBeGreaterThanOrEqual(blogLikes[i + 1])
+      }
     })
   })
 })

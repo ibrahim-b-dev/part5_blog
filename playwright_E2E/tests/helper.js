@@ -18,4 +18,14 @@ const createUser = async (request, { name, username, password }) => {
   await request.post("/api/users", { data: userPayload })
 }
 
-export { loginWith, createBlog, createUser }
+const likeABlog = async (page, blogTitle, likesCount) => {
+  const blog = page.locator(".blog").filter({ hasText: blogTitle })
+  await blog.getByRole("button", { name: "view" }).click()
+
+  for (let i = 0; i < likesCount; i++) {
+    await blog.getByTestId("likeButton").click()
+    await page.waitForTimeout(1000)
+  }
+}
+
+export { loginWith, createBlog, createUser, likeABlog }

@@ -41,7 +41,7 @@ const Blog = ({ blog, onLike, onRemove, currentUserId }) => {
         <div>{blog.url}</div>
         <div>
           <span data-testid="likes">{blog.likes}</span>
-          <button onClick={handleLikeClick}>like</button>
+          <button data-testid="likeButton" onClick={handleLikeClick}>like</button>
         </div>
         <div>{blog.author}</div>
         {currentUserId === blog.user.id && (
